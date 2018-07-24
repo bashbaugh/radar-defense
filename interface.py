@@ -50,6 +50,8 @@ class Interface:
             print(controls)
             self.radarPosition = int(controls[0])
             if int(controls[1]): self.radarOn = not self.radarOn
+            for i in range(0,8):
+                self.shieldOn[i+1] = int(controls[i+2])
                 
     def connectToController(self):
         try:
