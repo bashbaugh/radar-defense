@@ -13,23 +13,31 @@ class GameStart:
         self.enabled = True
         self.game = game
         self.connectTimer = 0
+        self.connectionSuccess = False
     
     def update(self):
         self.connectTimer += self.game.deltatime
-        if not self.game.interface.keyboard:
+        if (not self.game.interface.keyboard) and (not self.game.interface.controller):
             utils.text(self.game.screen, "Connecting to controller...", 90, 200, 45)
             self.game.interface.connectToController()
-        elif self.connectTimer < 2000:
+        elif self.connectTimer < 2000 and self.game.interface.keyboard:
             utils.text(self.game.screen, "Unable to connect to controller.", 30, 200, 45)
             utils.text(self.game.screen, "Using keyboard input.", 110, 250, 45)
+        elif self.connectTimer < 2000 and self.game.interface.controller:
+            utils.text(self.game.screen, "Successfuly connected to controller", 10, 200, 40)
+        elif self.game.interface.controller and not self.connectionSuccess:
+            self.checkForConnection()
         else:
             self.enabled = False
             for o in self.game.gameObjects:
                 o.enabled = True
             
         
-    def render(self):
-        pass
+    def checkForConnection(self):
+        utils.text(self.game.screen, "Please turn knob to position 1.", 20, 200, 45)
+        if self.game.interface.radarPosition == 1:
+            self.connectionSuccess = True
+        
 
 
 class Radar:
@@ -124,4 +132,3 @@ class GameOver:
             self.game.interface.enabled = True
             utils.text(self.game.screen, "You Lost", 160, 160, 80, red)
             
-        
