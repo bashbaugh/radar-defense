@@ -12,10 +12,12 @@ from gameObjects import *
         
 class Game:
     def __init__(self):
+        self.level = 1
         self.clock = pygame.time.Clock()
-        self.init()
+        self.initModules()
         self.gameObjects = []
         self.gamestart = GameStart(self)
+        self.missiles = []
         self.radar = Radar(self)
         self.interface = Interface(self)
         self.bg = Background(self)
@@ -29,13 +31,16 @@ class Game:
         self.gameObjects.append(self.gameover)
         self.gameObjects.append(self.radar)
         self.gameObjects.append(self.shield)
-        self.deltatime = 0
         self.gameObjects.append(self.gamestart)
+        self.deltatime = 0
+        self.fps = 0
+        
         
         done = False
         self.clock.tick()
         while not done:
             self.deltatime = self.clock.tick()
+            self.fps = self.clock.get_fps()
             #print(self.deltatime)
             #self.deltatime = pygame.time.Clock.get_time()
             self.screen.fill((000, 000, 000))
@@ -48,7 +53,7 @@ class Game:
             pygame.display.flip()
             
         self.quitgame
-    def init(self):
+    def initModules(self):
         pygame.init()
         self.screen = pygame.display.set_mode((640, 480))
         #utils.screen = self.screen

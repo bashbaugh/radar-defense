@@ -47,7 +47,7 @@ class Interface:
         if self.controller:
             controls = self.ser.readline().strip().split(" ")
             self.ser.flushInput()
-            print(controls)
+            #print(controls)
             self.radarPosition = int(controls[0])
             if int(controls[1]): self.radarOn = not self.radarOn
             for i in range(0,8):

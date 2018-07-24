@@ -1,5 +1,9 @@
 import utils
 import pygame
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+from math import floor
+import random
 import interface
 from time import time
 
@@ -7,6 +11,7 @@ white = (200, 200, 200)
 radarGreen = (58, 168, 8)
 shieldYellow = (255, 216, 0)
 red = (255, 0, 0)
+green = (0, 255, 0)
 
 class GameStart:
     def __init__(self, game):
@@ -38,7 +43,49 @@ class GameStart:
         if self.game.interface.radarPosition == 1:
             self.connectionSuccess = True
         
-
+class Missile:
+    
+    def __init__(self, game):
+        self.shields = []
+        self.game = game
+        self.enabled = False
+        self.game.gameObjects.append(self)
+        self.tripTime = random.randint(20, 70)
+        self.posx, self.posy = self.generateOrigin()
+        self.targetx = 320
+        self.targety = 240
+        self.targetthreshold = 10
+        self.shieldthreshold = 5
+        self.xdist = self.targetx - self.posx
+        self.ydist = self.targety - self.posy
+    
+    def update(self):
+        #deltaSeconds = self.game.deltatime / 1000
+        fps = self.game.fps
+        movex = self.xdist / fps / self.tripTime
+        movey = self.ydist / fps / self.tripTime
+        self.posx += movex
+        self.posy += movey
+        
+        point = Point(self.posx, self.posy)
+        
+        
+        
+    def generateOrigin(self):
+        quadrant = random.randint(1,4)
+        if quadrant == 1:
+            x = random.randint(130, 610)
+            y = 10
+        if quadrant == 2:
+            x = 560
+            y = random.randint(20, 460)
+        if quadrant == 3:
+            x = random.randint(130, 610)
+            y = 470
+        if quadrant == 4:
+            x = 80
+            y = random.randint(20, 460)
+        return x, y
 
 class Radar:
     radar_sector_vertices = [((320, 240), (500, 60), (320, 5)),\
@@ -58,10 +105,19 @@ class Radar:
         self.starttime = time()
 
     def update(self):
-        rotation = (self.game.interface.radarPosition * (360/8)) - 22
+        self.scan_sector = self.game.interface.radarPosition
+        rotation = (self.scan_sector * (360/8)) - 22
         radarSurf = pygame.transform.rotate(self.originalRadarSurf, -rotation)
         if self.game.interface.radarOn:
-            pygame.draw.polygon(self.game.screen, radarGreen, self.radar_sector_vertices[self.game.interface.radarPosition - 1], 3)
+            pygame.draw.polygon(self.game.screen, radarGreen, self.radar_sector_vertices[self.scan_sector - 1], 3)
+            
+            for missile in self.game.missiles:
+                if missile.enabled:
+                    missilePos = Point(missile.posx, missile.posy)
+                    polygon = Polygon(self.radar_sector_vertices[self.scan_sector - 1])
+                    if polygon.contains(missilePos):
+                        pygame.draw.circle(self.game.screen, radarGreen, (int(missile.posx), int(missile.posy)), 2)
+                        
         self.game.screen.blit(radarSurf, (320 - 35, 220 - 30))
 
     def render(self):
@@ -72,21 +128,35 @@ class Energy:
         self.enabled = False
         self.game = game
         self.energy = 100
+        self.progress = 0
         self.timer = 0
+        self.progTimer = 0
         
     def update(self):
         deltaT = self.game.deltatime
         self.timer += deltaT
+        self.progTimer += deltaT
         if self.game.interface.radarOn:
             self.timer += 2 * deltaT
         for shield in self.game.interface.shieldOn:
             if shield:
                 self.timer += deltaT
         self.energy -= self.timer / 5000
-        if self.timer >= 5000: self.timer = 0
+        if self.timer >= 5000: 
+            self.timer = 0
+            m = Missile(self.game)
+            self.game.missiles.append(m)
         utils.text(self.game.screen, "Energy {0}%".format(str(self.energy)), 510, 10, 25)
         if self.energy <= 0:
             self.game.gameover.lost = True
+        
+        self.progress = floor(self.progTimer / 20200)
+        if self.progress >= 10:
+            self.game.gameover.won = True
+        utils.text(self.game.screen, "{0}/10".format(str(self.progress).split(".")[0]), 10, 10, 25)
+        
+        
+        
 class Shield:
     shield_locations = [[(320, 130), (410, 150)], [(410, 150), (430, 240)],\
         [(430, 240), (390, 310)], [(390, 310), (320, 330)], [(320, 330), (250, 310)],\
@@ -131,4 +201,10 @@ class GameOver:
             self.enabled = True
             self.game.interface.enabled = True
             utils.text(self.game.screen, "You Lost", 160, 160, 80, red)
+        if self.won:
+            for o in self.game.gameObjects:
+                o.enabled = False
+            self.enabled = True
+            self.game.interface.enabled = True
+            utils.text(self.game.screen, "You Won", 160, 160, 80, red)
             
