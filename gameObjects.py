@@ -134,6 +134,7 @@ class Radar:
         if self.game.energy.energyAvailable:
             self.scan_sector = self.game.interface.radarPosition
             rotation = (self.scan_sector * (360/8)) - 22
+            self.radarSurf = pygame.transform.rotate(self.originalRadarSurf, -rotation)
             
             if self.game.interface.radarOn:
                 pygame.draw.polygon(self.game.screen, radarGreen, self.radar_sector_vertices[self.scan_sector - 1], 3)
@@ -145,8 +146,7 @@ class Radar:
                         if polygon.contains(missilePos):
                             pygame.draw.circle(self.game.screen, radarGreen, (int(missile.posx), int(missile.posy)), 2)
         
-        radarSurf = pygame.transform.rotate(self.originalRadarSurf, -rotation)
-        self.game.screen.blit(radarSurf, (320 - 35, 220 - 30))
+        self.game.screen.blit(self.radarSurf, (320 - 35, 220 - 30))
 
 
 class Energy:
@@ -176,7 +176,7 @@ class Energy:
             self.energyAvailable = False
         utils.text(self.game.screen, "Energy {0}%".format(str(self.energy)), 510, 10, 25)
         
-        self.progress = floor(self.progTimer / 30200)
+        self.progress = floor(self.progTimer / 22200)
         if self.progress >= 10:
             self.game.gameover.won = True
         utils.text(self.game.screen, "{0}/10".format(str(self.progress).split(".")[0]), 10, 10, 25)
