@@ -7,7 +7,7 @@ import random
 import interface
 from time import time
 
-white = (200, 200, 200)
+white = (255, 255, 255)
 radarGreen = (58, 168, 8)
 shieldYellow = (255, 216, 0)
 red = (255, 0, 0)
@@ -19,6 +19,7 @@ class GameStart:
         self.game = game
         self.connectTimer = 0
         self.connectionSuccess = False
+        #self.gameStarted = False
     
     def update(self):
         self.connectTimer += self.game.deltatime
@@ -33,9 +34,11 @@ class GameStart:
         elif self.game.interface.controller and not self.connectionSuccess:
             self.checkForConnection()
         else:
-            self.enabled = False
             for o in self.game.gameObjects:
                 o.enabled = True
+            self.enabled = False
+            for i in range(10):
+                self.game.missiles.append(Missile(self.game))
             
         
     def checkForConnection(self):
@@ -48,7 +51,7 @@ class Missile:
     def __init__(self, game):
         self.shields = []
         self.game = game
-        self.enabled = False
+        self.enabled = True
         self.game.gameObjects.append(self)
         self.tripTime = random.randint(20, 70)
         self.posx, self.posy = self.generateOrigin()
@@ -62,12 +65,23 @@ class Missile:
     def update(self):
         #deltaSeconds = self.game.deltatime / 1000
         fps = self.game.fps
-        movex = self.xdist / fps / self.tripTime
-        movey = self.ydist / fps / self.tripTime
+        try:
+            movex = self.xdist / fps / self.tripTime
+            movey = self.ydist / fps / self.tripTime
+        except:
+            movex = 0
+            movey = 0
         self.posx += movex
         self.posy += movey
         
-        point = Point(self.posx, self.posy)
+        shields = self.game.shield.shield_locations
+        for i in range(8):
+            if self.game.interface.shieldOn[i+1]:
+                if utils.lineIntersectsCircle(shields[i][0][0], shields[i][0][1],\
+                shields[i][1][0], shields[i][1][1], int(self.posx), int(self.posy), 2):
+                    self.enabled = False
+                    pygame.draw.circle(self.game.screen, white, (int(self.posx), int(self.posy)), 5)
+                    self.game.missiles.append(Missile(self.game))
         
         
         
@@ -144,13 +158,11 @@ class Energy:
         self.energy -= self.timer / 5000
         if self.timer >= 5000: 
             self.timer = 0
-            m = Missile(self.game)
-            self.game.missiles.append(m)
         utils.text(self.game.screen, "Energy {0}%".format(str(self.energy)), 510, 10, 25)
         if self.energy <= 0:
             self.game.gameover.lost = True
         
-        self.progress = floor(self.progTimer / 20200)
+        self.progress = floor(self.progTimer / 30200)
         if self.progress >= 10:
             self.game.gameover.won = True
         utils.text(self.game.screen, "{0}/10".format(str(self.progress).split(".")[0]), 10, 10, 25)
