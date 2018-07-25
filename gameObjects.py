@@ -37,8 +37,6 @@ class GameStart:
             for o in self.game.gameObjects:
                 o.enabled = True
             self.enabled = False
-            for i in range(10):
-                self.game.missiles.append(Missile(self.game))
             
         
     def checkForConnection(self):
@@ -52,8 +50,10 @@ class Missile:
         self.shields = []
         self.game = game
         self.enabled = True
+        self.explode = False
+        self.explosionSize = 0
         self.game.gameObjects.append(self)
-        self.tripTime = random.randint(20, 70)
+        self.tripTime = random.randint(40, 100)
         self.posx, self.posy = self.generateOrigin()
         self.targetx = 320
         self.targety = 240
@@ -63,26 +63,38 @@ class Missile:
         self.ydist = self.targety - self.posy
     
     def update(self):
+        if self.posx <= 330 and self.posx >= 310 and self.posy <= 250 and self.posy >= 230:
+            self.explode = True
+        
+        if self.explode:
+            self.explosionSize += 10;
+            pygame.draw.circle(self.game.screen, white, (320, 240), self.explosionSize)
+            if self.explosionSize >= 500:
+                self.game.gameover.lost = True
+        else:
+            self.missileLoop()
+            
+        
+    def missileLoop(self):
         #deltaSeconds = self.game.deltatime / 1000
-        fps = self.game.fps
-        try:
-            movex = self.xdist / fps / self.tripTime
-            movey = self.ydist / fps / self.tripTime
-        except:
-            movex = 0
-            movey = 0
-        self.posx += movex
-        self.posy += movey
-        
-        shields = self.game.shield.shield_locations
-        for i in range(8):
-            if self.game.interface.shieldOn[i+1]:
-                if utils.lineIntersectsCircle(shields[i][0][0], shields[i][0][1],\
-                shields[i][1][0], shields[i][1][1], int(self.posx), int(self.posy), 2):
-                    self.enabled = False
-                    pygame.draw.circle(self.game.screen, white, (int(self.posx), int(self.posy)), 5)
-                    self.game.missiles.append(Missile(self.game))
-        
+            fps = self.game.fps
+            try:
+                movex = self.xdist / fps / self.tripTime
+                movey = self.ydist / fps / self.tripTime
+            except:
+                movex = 0
+                movey = 0
+            self.posx += movex
+            self.posy += movey
+            
+            shields = self.game.shield.shield_locations
+            for i in range(8):
+                if self.game.shield.shieldsOn[i+1]:
+                    if utils.lineIntersectsCircle(shields[i][0][0], shields[i][0][1],\
+                    shields[i][1][0], shields[i][1][1], int(self.posx), int(self.posy), 2):
+                        self.enabled = False
+                        pygame.draw.circle(self.game.screen, white, (int(self.posx), int(self.posy)), 5)
+                        self.game.missiles.append(Missile(self.game))
         
         
     def generateOrigin(self):
@@ -119,23 +131,23 @@ class Radar:
         self.starttime = time()
 
     def update(self):
-        self.scan_sector = self.game.interface.radarPosition
-        rotation = (self.scan_sector * (360/8)) - 22
-        radarSurf = pygame.transform.rotate(self.originalRadarSurf, -rotation)
-        if self.game.interface.radarOn:
-            pygame.draw.polygon(self.game.screen, radarGreen, self.radar_sector_vertices[self.scan_sector - 1], 3)
+        if self.game.energy.energyAvailable:
+            self.scan_sector = self.game.interface.radarPosition
+            rotation = (self.scan_sector * (360/8)) - 22
             
-            for missile in self.game.missiles:
-                if missile.enabled:
-                    missilePos = Point(missile.posx, missile.posy)
-                    polygon = Polygon(self.radar_sector_vertices[self.scan_sector - 1])
-                    if polygon.contains(missilePos):
-                        pygame.draw.circle(self.game.screen, radarGreen, (int(missile.posx), int(missile.posy)), 2)
-                        
+            if self.game.interface.radarOn:
+                pygame.draw.polygon(self.game.screen, radarGreen, self.radar_sector_vertices[self.scan_sector - 1], 3)
+            
+                for missile in self.game.missiles:
+                    if missile.enabled:
+                        missilePos = Point(missile.posx, missile.posy)
+                        polygon = Polygon(self.radar_sector_vertices[self.scan_sector - 1])
+                        if polygon.contains(missilePos):
+                            pygame.draw.circle(self.game.screen, radarGreen, (int(missile.posx), int(missile.posy)), 2)
+        
+        radarSurf = pygame.transform.rotate(self.originalRadarSurf, -rotation)
         self.game.screen.blit(radarSurf, (320 - 35, 220 - 30))
 
-    def render(self):
-        pass
 
 class Energy:
     def __init__(self, game):
@@ -145,6 +157,7 @@ class Energy:
         self.progress = 0
         self.timer = 0
         self.progTimer = 0
+        self.energyAvailable = True
         
     def update(self):
         deltaT = self.game.deltatime
@@ -158,9 +171,10 @@ class Energy:
         self.energy -= self.timer / 5000
         if self.timer >= 5000: 
             self.timer = 0
-        utils.text(self.game.screen, "Energy {0}%".format(str(self.energy)), 510, 10, 25)
         if self.energy <= 0:
-            self.game.gameover.lost = True
+            self.energy = 0
+            self.energyAvailable = False
+        utils.text(self.game.screen, "Energy {0}%".format(str(self.energy)), 510, 10, 25)
         
         self.progress = floor(self.progTimer / 30200)
         if self.progress >= 10:
@@ -176,12 +190,17 @@ class Shield:
     def __init__(self, game):
         self.enabled = False
         self.game = game
+        self.shieldsOn = [False, False, False, False, False, False, False, False, False]
         
     def update(self):
-        for i in range(8):
-            if self.game.interface.shieldOn[i + 1]:
-                pygame.draw.line(self.game.screen, shieldYellow,\
-                    self.shield_locations[i][0], self.shield_locations[i][1])
+        if self.game.energy.energyAvailable:
+            self.shieldsOn = self.game.interface.shieldOn
+            for i in range(8):
+                if self.shieldsOn[i + 1]:
+                    pygame.draw.line(self.game.screen, shieldYellow,\
+                        self.shield_locations[i][0], self.shield_locations[i][1])
+        else:
+            self.shieldsOn = [False, False, False, False, False, False, False, False, False]
 
 class Background:
     def __init__(self, game):

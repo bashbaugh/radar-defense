@@ -34,7 +34,10 @@ class Game:
         self.gameObjects.append(self.gamestart)
         self.deltatime = 0
         self.fps = 0
+        self.level = 1
         
+        for i in range(2):
+            self.missiles.append(Missile(self))
         
         done = False
         self.clock.tick()
