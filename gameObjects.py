@@ -12,6 +12,8 @@ radarGreen = (58, 168, 8)
 shieldYellow = (255, 216, 0)
 red = (255, 0, 0)
 green = (0, 255, 0)
+grey = (127, 127, 127)
+skyBlue = (137, 188, 255)
 
 class GameStart:
     def __init__(self, game):
@@ -36,11 +38,18 @@ class GameStart:
         else:
             for o in self.game.gameObjects:
                 o.enabled = True
+            for i in range(self.game.numMissiles):
+                self.game.missiles.append(Missile(self.game))
             self.enabled = False
+            utils.text(self.game.screen, "START!", 280, 240, 45)
             
         
     def checkForConnection(self):
-        utils.text(self.game.screen, "Please turn knob to position 1.", 20, 200, 45)
+        utils.text(self.game.screen, "Please turn knob to position 1.", 50, 170, 45)
+        utils.text(self.game.screen, "And turn off all shields.", 65, 240, 45)
+        for shield in self.game.interface.shieldOn:
+                if shield != False:
+                    return
         if self.game.interface.radarPosition == 1:
             self.connectionSuccess = True
         
@@ -53,8 +62,9 @@ class Missile:
         self.explode = False
         self.explosionSize = 0
         self.game.gameObjects.append(self)
-        self.tripTime = random.randint(40, 100)
+        self.tripTime = random.randint(40, 100) # speed
         self.posx, self.posy = self.generateOrigin()
+        self.height = random.randint(1, 4)
         self.targetx = 320
         self.targety = 240
         self.targetthreshold = 10
@@ -67,9 +77,10 @@ class Missile:
             self.explode = True
         
         if self.explode:
+            self.game.energy.progTimer = 0
             self.explosionSize += 10;
             pygame.draw.circle(self.game.screen, white, (320, 240), self.explosionSize)
-            if self.explosionSize >= 500:
+            if self.explosionSize >= 700:
                 self.game.gameover.lost = True
         else:
             self.missileLoop()
@@ -148,6 +159,48 @@ class Radar:
         
         self.game.screen.blit(self.radarSurf, (320 - 35, 220 - 30))
 
+class AntiMissileSystem:
+    cameraPositions = [(64, 500), (128, 500), (192, 500), (256, 500), (320, 500),\
+        (384, 500), (448, 500), (512, 500),(64, 557), (128, 557), (192, 557),\
+        (256, 557), (320, 557), (384, 557), (448, 557), (512, 557)]
+    cameraWidth = 56
+    cameraHeight = 49
+    
+    def __init__(self, game):
+        self.game = game
+        self.enabled = False
+        self.antiMissilesRemaining = 2
+    
+    def update(self):
+        for camera in self.cameraPositions:
+            rect = pygame.Rect((camera[0] + 4, camera[1] + 4), (self.cameraWidth, self.cameraHeight))
+            pygame.draw.rect(self.game.screen, skyBlue , rect)
+            
+        for missile in self.game.missiles:
+            if missile.enabled:
+                dist = utils.dist(missile.posx, missile.posy, 320, 240)
+                if dist <= 100:
+                    missileAngle = int(utils.angleBetween(320, 240, missile.posx, missile.posy))
+                    if missileAngle < 0:
+                        missileAngle = 360 - abs(missileAngle)
+                    #print(missileAngle)
+                    missileSector = int(missileAngle / 45)
+                    offsetx = int(missileAngle % 45) + 10
+                    offsety = 5
+                    if missile.height == 1:
+                        offsety = 15
+                    if missile.height == 2:
+                        offsety = 30
+                    if missile.height == 3:
+                        missileSector += 8
+                        offsety = 15
+                    if missile.height == 4:
+                        missileSector += 8
+                        offsety = 30
+                    pygame.draw.circle(self.game.screen, red, (self.cameraPositions\
+                        [missileSector][0] + offsetx, self.cameraPositions\
+                        [missileSector][1] + offsety), int(dist / 20 * -1 + 7))
+                    
 
 class Energy:
     def __init__(self, game):
@@ -176,7 +229,7 @@ class Energy:
             self.energyAvailable = False
         utils.text(self.game.screen, "Energy {0}%".format(str(self.energy)), 510, 10, 25)
         
-        self.progress = floor(self.progTimer / 22200)
+        self.progress = floor(self.progTimer / 25200)
         if self.progress >= 10:
             self.game.gameover.won = True
         utils.text(self.game.screen, "{0}/10".format(str(self.progress).split(".")[0]), 10, 10, 25)
@@ -208,7 +261,7 @@ class Background:
         self.screen = game.screen
         
     def update(self):
-        # Lines:
+        # Sector Lines:
         pygame.draw.line(self.screen, white, (320, 130), (320, 5))#top
         pygame.draw.line(self.screen, white, (210, 240), (80, 240))#left
         pygame.draw.line(self.screen, white, (430, 240), (560, 240))#right
@@ -217,6 +270,15 @@ class Background:
         pygame.draw.line(self.screen, white, (390, 310), (500, 420))#bottom right
         pygame.draw.line(self.screen, white, (230, 150), (140, 60))#top left
         pygame.draw.line(self.screen, white, (250, 310), (140, 420))#bottom left
+        
+        #bottom/top divider line:
+        pygame.draw.line(self.screen, white, (10, 485), (630, 485), 2)
+        
+        #camera divider lines:
+        for i in range(1, 10):
+            pygame.draw.line(self.screen, grey, (64*i, 500), (64*i, 620))
+        pygame.draw.line(self.screen, grey, (64, 557), (576, 557))
+
         
 class GameOver:
     def __init__(self, game):
@@ -232,10 +294,12 @@ class GameOver:
             self.enabled = True
             self.game.interface.enabled = True
             utils.text(self.game.screen, "You Lost", 160, 160, 80, red)
+            print("Your base was destroyed. :(")
         if self.won:
             for o in self.game.gameObjects:
                 o.enabled = False
             self.enabled = True
             self.game.interface.enabled = True
-            utils.text(self.game.screen, "You Won", 160, 160, 80, red)
+            utils.text(self.game.screen, "You Won", 160, 160, 80, green)
+            print("Your engineers fixed your power generator. :)")
             

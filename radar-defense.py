@@ -23,6 +23,7 @@ class Game:
         self.bg = Background(self)
         self.energy = Energy(self)
         self.shield = Shield(self)
+        self.antimissile = AntiMissileSystem(self)
         self.gameover = GameOver(self)
         self.interface.eventHandler = pygame.event
         self.gameObjects.append(self.interface)
@@ -30,14 +31,14 @@ class Game:
         self.gameObjects.append(self.bg)
         self.gameObjects.append(self.gameover)
         self.gameObjects.append(self.radar)
+        self.gameObjects.append(self.antimissile)
         self.gameObjects.append(self.shield)
         self.gameObjects.append(self.gamestart)
         self.deltatime = 0
         self.fps = 0
         self.level = 1
+        self.numMissiles = number_of_missiles
         
-        for i in range(2):
-            self.missiles.append(Missile(self))
         
         done = False
         self.clock.tick()
@@ -58,7 +59,7 @@ class Game:
         self.quitgame
     def initModules(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((640, 480))
+        self.screen = pygame.display.set_mode((640, 640))
         #utils.screen = self.screen
         pygame.mouse.set_visible(False);
         pygame.display.set_caption("Radar Defense Game")
@@ -66,8 +67,14 @@ class Game:
     def quitgame(self):
         pygame.quit()
         
-print("----------------\n Radar Defense\n----------------\n\nBy Benjamin A.")
-sleep(1)
+print("\n----------------\n Radar Defense\n----------------\n\nBy Benjamin A.\n")
+print("You are the director of a top secret base. Unfortunately, your power generator broke down today, and some enemies have taken the opportunity to come and attack you with missiles. Without power, you cannot operate your shields, and cannot block the missiles. Luckily, you have several backup supply batteries, but they will only last for so long. Your job is to survive long enough for your engineers to fix the power generator.\n")
+number_of_missiles = input("Choose a number of missiles(1=super easy, 2 = easy, 3=normal, 5 = super hard):")
+print("\n\n-------- Instructions: --------\nTry to survive as long as you can. the sky is divided into eight sectors, each sector has a shield. Use your shields to block incoming missiles(don't let them get to the radar!). You can turn your radar on to scan different sectors of the sky for missiles - but only have your radar and shields on when neccessary, because they use lots of energy. Your remaining energy is in the top right corner. The top left corner shows the progress of the engineers fixing the power generator. \nThere will always be {0} active missiles in the sky.\n\n".format(number_of_missiles))
+
+pause = raw_input("Press enter to start.")
 game = Game()
+
+print("\nGoodbye!\n\n")
         
 
