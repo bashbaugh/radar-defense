@@ -63,7 +63,7 @@ class Missile:
         self.explode = False
         self.explosionSize = 0
         self.game.gameObjects.append(self)
-        self.tripTime = random.randint(40, 100) # speed
+        self.tripTime = random.randint(50, 110)
         self.posx, self.posy = self.generateOrigin()
         #self.camPosition = (0,0)
         self.height = random.randint(1, 4)
@@ -80,6 +80,7 @@ class Missile:
         
         if self.explode:
             self.game.energy.progTimer = 0
+            self.game.antimissile.enabled = False
             self.explosionSize += 10;
             pygame.draw.circle(self.game.screen, white, (320, 240), self.explosionSize)
             if self.explosionSize >= 700:
@@ -171,7 +172,7 @@ class AntiMissileSystem:
     def __init__(self, game):
         self.game = game
         self.enabled = False
-        self.antiMissilesRemaining = 2
+        self.antiMissilesRemaining = self.game.numMissiles
         self.antiMissileStage = 0
         self.antiMissileLoop = False
         self.currentCam = 0
@@ -211,7 +212,9 @@ class AntiMissileSystem:
                     if self.FIRE:
                         if utils.pointWithinCircle(mx, my, self.antiMissilex, self.antiMissiley, 8):
                             missile.enabled = False
+                            self.game.missiles.append(Missile(self.game))
                             pygame.draw.circle(self.game.screen, white, (mx, my), 15)
+                            cancelAntiMissile()
                         self.FIRE = False
                     
         if self.antiMissileLoop:
@@ -220,6 +223,7 @@ class AntiMissileSystem:
             
         if self.game.interface.antiMissile and self.antiMissilesRemaining > 0:
             self.antiMissileLoop = True
+            self.game.interface.radarOn = False
             
     def cancelAntiMissile(self):
             self.antiMissileLoop = False
@@ -261,13 +265,14 @@ class AntiMissileSystem:
                 self.fireTimer = 0
             else:
                 self.fireTimer += self.game.deltatime
-            if self.xpos >= 32: self.xpos = 1
+            if self.xpos >= 12: self.xpos = 1
             pygame.draw.rect(self.game.screen, green , self.AMrect, 2)
             self.antiMissilex = self.cameraPositions[self.currentCam-1][0] + self.xpos * 5
             pygame.draw.circle(self.game.screen, antimissileOrange, (self.antiMissilex, self.antiMissiley), 8, 1)
-            if self.fireTimer >= 3000:
+            if self.fireTimer >= 2000:
                 self.FIRE = True
                 self.antiMissilesRemaining -= 1
+                self.game.energy.energy -= 3
                 self.antiMissileStage = 3
 
 class Energy:
@@ -297,7 +302,7 @@ class Energy:
             self.energyAvailable = False
         utils.text(self.game.screen, "Energy {0}%".format(str(self.energy)), 510, 10, 25)
         
-        self.progress = floor(self.progTimer / 25200)
+        self.progress = floor(self.progTimer / 22200)
         if self.progress >= 10:
             self.game.gameover.won = True
         utils.text(self.game.screen, "{0}/10".format(str(self.progress).split(".")[0]), 10, 10, 25)

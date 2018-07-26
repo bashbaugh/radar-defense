@@ -55,7 +55,7 @@ void loop()
       + " " + String(shields[4] )+ " " + String(shields[5])
       + " " + String(shields[6]) + " " + String(shields[7]) + " " + String(antiMissile)
   );
-  delay(15);
+  delay(5);
 }
 
 void flash(byte n)
