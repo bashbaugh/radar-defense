@@ -204,9 +204,15 @@ class AntiMissileSystem:
                     if missile.height == 4:
                         missileSector += 8
                         offsety = 30
-                    pygame.draw.circle(self.game.screen, red, (self.cameraPositions\
-                        [missileSector][0] + offsetx, self.cameraPositions\
-                        [missileSector][1] + offsety), int(dist / 20 * -1 + 7))
+                    mx = self.cameraPositions[missileSector][0] + offsetx
+                    my = self.cameraPositions[missileSector][1] + offsety
+                    ms = int(dist / 20 * -1 + 7)
+                    pygame.draw.circle(self.game.screen, red, (mx, my), ms)
+                    if self.FIRE:
+                        if utils.pointWithinCircle(mx, my, self.antiMissilex, self.antiMissiley, 8):
+                            missile.enabled = False
+                            pygame.draw.circle(self.game.screen, white, (mx, my), 15)
+                        self.FIRE = False
                     
         if self.antiMissileLoop:
             self.antiMissile()
@@ -214,9 +220,8 @@ class AntiMissileSystem:
             
         if self.game.interface.antiMissile and self.antiMissilesRemaining > 0:
             self.antiMissileLoop = True
-
-    def antiMissile(self):
-        def cancel():
+            
+    def cancelAntiMissile(self):
             self.antiMissileLoop = False
             self.antiMissileStage = 0
             self.antiMissilex = 0
@@ -224,9 +229,11 @@ class AntiMissileSystem:
             self.xpos = 1
             self.ypos = 1
             self.fireTimer = 0
+
+    def antiMissile(self):
             
         if self.game.interface.radarOn == True:
-            cancel()
+            self.cancelAntiMissile()
             return
         if self.antiMissileStage == 0:
             if self.game.interface.antiMissile:
@@ -261,7 +268,7 @@ class AntiMissileSystem:
             if self.fireTimer >= 3000:
                 self.FIRE = True
                 self.antiMissilesRemaining -= 1
-                cancel()
+                self.antiMissileStage = 3
 
 class Energy:
     def __init__(self, game):

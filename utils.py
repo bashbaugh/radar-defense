@@ -53,6 +53,6 @@ def angleBetween(x1, y1, x2, y2):
     return angle_deg + 90
 
 def pointWithinCircle(x, y, cx, cy, cr):
-    return (x - cx)**2 + (y - cy)**2 < radius**2
+    return (x - cx)**2 + (y - cy)**2 < cr**2
 
     
