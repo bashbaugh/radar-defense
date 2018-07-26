@@ -14,6 +14,7 @@ red = (255, 0, 0)
 green = (0, 255, 0)
 grey = (127, 127, 127)
 skyBlue = (137, 188, 255)
+antimissileOrange = (255, 144, 0)
 
 class GameStart:
     def __init__(self, game):
@@ -64,6 +65,7 @@ class Missile:
         self.game.gameObjects.append(self)
         self.tripTime = random.randint(40, 100) # speed
         self.posx, self.posy = self.generateOrigin()
+        #self.camPosition = (0,0)
         self.height = random.randint(1, 4)
         self.targetx = 320
         self.targety = 240
@@ -170,12 +172,17 @@ class AntiMissileSystem:
         self.game = game
         self.enabled = False
         self.antiMissilesRemaining = 2
+        self.antiMissileStage = 0
+        self.antiMissileLoop = False
+        self.currentCam = 0
+        self.antiMissilex = 0
+        self.antiMissiley = 0
+        self.xpos = 1
+        self.ypos = 1
+        self.firetimer = 0
+        self.FIRE = False
     
     def update(self):
-        for camera in self.cameraPositions:
-            rect = pygame.Rect((camera[0] + 4, camera[1] + 4), (self.cameraWidth, self.cameraHeight))
-            pygame.draw.rect(self.game.screen, skyBlue , rect)
-            
         for missile in self.game.missiles:
             if missile.enabled:
                 dist = utils.dist(missile.posx, missile.posy, 320, 240)
@@ -201,6 +208,60 @@ class AntiMissileSystem:
                         [missileSector][0] + offsetx, self.cameraPositions\
                         [missileSector][1] + offsety), int(dist / 20 * -1 + 7))
                     
+        if self.antiMissileLoop:
+            self.antiMissile()
+            
+            
+        if self.game.interface.antiMissile and self.antiMissilesRemaining > 0:
+            self.antiMissileLoop = True
+
+    def antiMissile(self):
+        def cancel():
+            self.antiMissileLoop = False
+            self.antiMissileStage = 0
+            self.antiMissilex = 0
+            self.antiMissiley = 0
+            self.xpos = 1
+            self.ypos = 1
+            self.fireTimer = 0
+            
+        if self.game.interface.radarOn == True:
+            cancel()
+            return
+        if self.antiMissileStage == 0:
+            if self.game.interface.antiMissile:
+                self.antiMissileStage = 1
+                return
+            self.AMrect = pygame.Rect((self.cameraPositions[self.currentCam][0] + 4, self.cameraPositions[self.currentCam][1] + 4), (self.cameraWidth, self.cameraHeight))
+            pygame.draw.rect(self.game.screen, green , self.AMrect, 2)            
+            if self.currentCam == 15:
+                self.currentCam = 0
+            else:
+                self.currentCam += 1
+                
+        if self.antiMissileStage == 1:
+            if self.game.interface.antiMissile:
+                self.antiMissileStage = 2
+            pygame.draw.rect(self.game.screen, green , self.AMrect, 2)
+            self.antiMissilex= self.cameraPositions[self.currentCam-1][0] + 15
+            self.ypos = 1 if self.ypos == 2 else 2
+            self.antiMissiley = self.cameraPositions[self.currentCam-1][1] + self.ypos * 15
+            pygame.draw.circle(self.game.screen, antimissileOrange, (self.antiMissilex, self.antiMissiley), 8, 1)
+            
+        if self.antiMissileStage == 2:
+            if self.game.interface.antiMissile: 
+                self.xpos  += 1
+                self.fireTimer = 0
+            else:
+                self.fireTimer += self.game.deltatime
+            if self.xpos >= 32: self.xpos = 1
+            pygame.draw.rect(self.game.screen, green , self.AMrect, 2)
+            self.antiMissilex = self.cameraPositions[self.currentCam-1][0] + self.xpos * 5
+            pygame.draw.circle(self.game.screen, antimissileOrange, (self.antiMissilex, self.antiMissiley), 8, 1)
+            if self.fireTimer >= 3000:
+                self.FIRE = True
+                self.antiMissilesRemaining -= 1
+                cancel()
 
 class Energy:
     def __init__(self, game):
@@ -233,6 +294,8 @@ class Energy:
         if self.progress >= 10:
             self.game.gameover.won = True
         utils.text(self.game.screen, "{0}/10".format(str(self.progress).split(".")[0]), 10, 10, 25)
+        utils.text(self.game.screen, "{0}x anti-Missiles".format(str(self.game.antimissile.antiMissilesRemaining)), 500, 460, 20)
+        
         
         
         
@@ -259,6 +322,7 @@ class Background:
     def __init__(self, game):
         self.enabled = False
         self.screen = game.screen
+        self.game = game
         
     def update(self):
         # Sector Lines:
@@ -278,6 +342,11 @@ class Background:
         for i in range(1, 10):
             pygame.draw.line(self.screen, grey, (64*i, 500), (64*i, 620))
         pygame.draw.line(self.screen, grey, (64, 557), (576, 557))
+        
+        #missile cam sky color:
+        for camera in self.game.antimissile.cameraPositions:
+            rect = pygame.Rect((camera[0] + 4, camera[1] + 4), (self.game.antimissile.cameraWidth, self.game.antimissile.cameraHeight))
+            pygame.draw.rect(self.screen, skyBlue , rect)
 
         
 class GameOver:

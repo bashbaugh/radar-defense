@@ -43,7 +43,7 @@ class Game:
         done = False
         self.clock.tick()
         while not done:
-            self.deltatime = self.clock.tick()
+            self.deltatime = self.clock.tick(60)
             self.fps = self.clock.get_fps()
             #print(self.deltatime)
             #self.deltatime = pygame.time.Clock.get_time()

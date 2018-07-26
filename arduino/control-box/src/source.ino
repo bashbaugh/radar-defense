@@ -7,9 +7,11 @@ const byte data = 11;
 const byte led = 13;
 const byte switchIn = A0;
 const byte radarOnPin = A1;
+const byte antiMissileButton = A2;
 
 byte radarPos = 0;
 bool radarSwitch = 0;
+bool antiMissile = 0;
 bool shields[9];
 
 
@@ -26,6 +28,7 @@ void setup()
   pinMode(led, OUTPUT);
   pinMode(switchIn, INPUT);
   pinMode(radarOnPin, INPUT);
+  pinMode(antiMissileButton, INPUT);
   for (int i = 2; i < 10; i++){
     pinMode(i, INPUT);
   }
@@ -42,6 +45,7 @@ void loop()
     if (digitalRead(switchIn)) radarPos = i + 1;
   }
   radarSwitch = digitalRead(radarOnPin);
+  antiMissile = digitalRead(antiMissileButton);
   for (int i = 0; i<8; i++){
     shields[i] = digitalRead(i+2);
   }
@@ -49,9 +53,9 @@ void loop()
       + " " + String(shields[0]) + " " + String(shields[1])
       + " " + String(shields[2] )+ " " + String(shields[3])
       + " " + String(shields[4] )+ " " + String(shields[5])
-      + " " + String(shields[6]) + " " + String(shields[7])
+      + " " + String(shields[6]) + " " + String(shields[7]) + " " + String(antiMissile)
   );
-  delay(30);
+  delay(15);
 }
 
 void flash(byte n)

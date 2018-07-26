@@ -14,6 +14,8 @@ class Interface:
         self.radarPosition = 1
         self.radarOn = False
         self.shieldOn = [False, False, False, False, False, False, False, False, False]
+        self.antiMissile = False
+        self.antiMissileJustOn = False
     
     def update(self):
         self.events = self.eventHandler.get()
@@ -52,6 +54,15 @@ class Interface:
             if int(controls[1]): self.radarOn = not self.radarOn
             for i in range(0,8):
                 self.shieldOn[i+1] = int(controls[i+2])
+            if int(controls[10]):
+                if not self.antiMissileJustOn:
+                    self.antiMissileJustOn = True
+                    self.antiMissile = True
+                else:
+                    self.antiMissile = False
+            else:
+                self.antiMissileJustOn = False
+                self.antiMissile = False
                 
     def connectToController(self):
         try:
