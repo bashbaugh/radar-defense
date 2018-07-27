@@ -210,12 +210,12 @@ class AntiMissileSystem:
                     ms = int(dist / 20 * -1 + 7)
                     pygame.draw.circle(self.game.screen, red, (mx, my), ms)
                     if self.FIRE:
-                        if utils.pointWithinCircle(mx, my, self.antiMissilex, self.antiMissiley, 8):
+                        if utils.pointWithinCircle(mx, my, self.antiMissilex, self.antiMissiley, 9):
                             missile.enabled = False
                             self.game.missiles.append(Missile(self.game))
                             pygame.draw.circle(self.game.screen, white, (mx, my), 15)
-                            cancelAntiMissile()
                         self.FIRE = False
+                        self.cancelAntiMissile()
                     
         if self.antiMissileLoop:
             self.antiMissile()
@@ -244,7 +244,7 @@ class AntiMissileSystem:
                 self.antiMissileStage = 1
                 return
             self.AMrect = pygame.Rect((self.cameraPositions[self.currentCam][0] + 4, self.cameraPositions[self.currentCam][1] + 4), (self.cameraWidth, self.cameraHeight))
-            pygame.draw.rect(self.game.screen, green , self.AMrect, 2)            
+            pygame.draw.rect(self.game.screen, green , self.AMrect, 3)            
             if self.currentCam == 15:
                 self.currentCam = 0
             else:
@@ -302,7 +302,7 @@ class Energy:
             self.energyAvailable = False
         utils.text(self.game.screen, "Energy {0}%".format(str(self.energy)), 510, 10, 25)
         
-        self.progress = floor(self.progTimer / 22200)
+        self.progress = floor(self.progTimer / 25200)
         if self.progress >= 10:
             self.game.gameover.won = True
         utils.text(self.game.screen, "{0}/10".format(str(self.progress).split(".")[0]), 10, 10, 25)
