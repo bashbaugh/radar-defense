@@ -18,6 +18,7 @@ class Interface:
         self.antiMissileJustOn = False
     
     def update(self):
+        AMkeyPressed = False
         self.events = self.eventHandler.get()
         for event in self.events:
             if event.type == pygame.KEYDOWN:
@@ -42,10 +43,16 @@ class Interface:
                 if event.key == pygame.K_7:
                     self.shieldOn[7] = not self.shieldOn[7]
                 if event.key == pygame.K_8:
-                    self.shieldOn[8] = not self.shieldOn[8] 
+                    self.shieldOn[8] = not self.shieldOn[8]
+                if event.key == pygame.K_e:
+                    self.antiMissilePressed(True)
+                    AMkeyPressed = True
                 
             if (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE) or (event.type == pygame.QUIT):
                 self.quit = True
+        if AMkeyPressed == False:
+            self.antiMissilePressed(False)
+                
         if self.controller:
             controls = self.ser.readline().strip().split(" ")
             self.ser.flushInput()
@@ -54,7 +61,10 @@ class Interface:
             if int(controls[1]): self.radarOn = not self.radarOn
             for i in range(0,8):
                 self.shieldOn[i+1] = int(controls[i+2])
-            if int(controls[10]):
+            self.antiMissilePressed(int(controls[10]))
+                
+    def antiMissilePressed(self, state):
+            if int(state):
                 if not self.antiMissileJustOn:
                     self.antiMissileJustOn = True
                     self.antiMissile = True

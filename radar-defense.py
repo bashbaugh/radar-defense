@@ -31,10 +31,10 @@ class Game:
         self.shield = Shield(self)
         self.antimissile = AntiMissileSystem(self)
         self.gameover = GameOver(self)
+        self.gameObjects.append(self.bg)
         self.gameObjects.append(self.interface)
         self.gameObjects.append(self.antimissile)
         self.gameObjects.append(self.energy)
-        self.gameObjects.append(self.bg)
         self.gameObjects.append(self.gameover)
         self.gameObjects.append(self.radar)
         self.gameObjects.append(self.shield)
@@ -44,7 +44,7 @@ class Game:
         done = False
         self.clock.tick()
         while not done:
-            self.deltatime = self.clock.tick(60)
+            self.deltatime = self.clock.tick(8)
             self.fps = self.clock.get_fps()
             #print(self.deltatime)
             #self.deltatime = pygame.time.Clock.get_time()
