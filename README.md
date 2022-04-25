@@ -6,7 +6,7 @@ Uses a custom-built controller(built with an arduino), but keyboard input is sup
 
 ## Installation and use:
 
-Uses python 2.7
+Use Python3 (I think python2 will work too)
 
 ### Dependencies:
 

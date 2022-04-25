@@ -287,25 +287,27 @@ class Energy:
         
     def update(self):
         deltaT = self.game.deltatime
-        self.timer += deltaT
+        timeToAdd = deltaT
+        # self.timer += deltaT
         self.progTimer += deltaT
         if self.game.interface.radarOn:
-            self.timer += 2 * deltaT
+            # self.timer += 2 * deltaT
+            timeToAdd += 2*deltaT
         for shield in self.game.interface.shieldOn:
             if shield:
-                self.timer += deltaT
-        self.energy -= self.timer / 5000
-        if self.timer >= 5000: 
-            self.timer = 0
+                timeToAdd += deltaT
+        self.energy -= timeToAdd / 5000
+        # if self.timer >= 5000: 
+        #     self.timer = 0
         if self.energy <= 0:
             self.energy = 0
             self.energyAvailable = False
-        utils.text(self.game.screen, "Energy {0}%".format(str(self.energy)), 510, 10, 25)
+        utils.text(self.game.screen, "Energy {:.1f}%".format(self.energy), 510, 10, 25)
         
         self.progress = floor(self.progTimer / 25200)
         if self.progress >= 10:
             self.game.gameover.won = True
-        utils.text(self.game.screen, "{0}/10".format(str(self.progress).split(".")[0]), 10, 10, 25)
+        utils.text(self.game.screen, "Progress {0}/10".format(str(self.progress).split(".")[0]), 10, 10, 25)
         utils.text(self.game.screen, "{0}x anti-Missiles".format(str(self.game.antimissile.antiMissilesRemaining)), 500, 460, 20)
         
         
@@ -381,6 +383,6 @@ class GameOver:
                 o.enabled = False
             self.enabled = True
             self.game.interface.enabled = True
-            utils.text(self.game.screen, "You Won", 160, 160, 80, green)
+            utils.text(self.game.screen, "You Win", 165, 160, 80, green)
             print("Your engineers fixed your power generator. :)")
             

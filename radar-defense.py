@@ -18,7 +18,7 @@ class Game:
         self.gameObjects = []
         self.gamestart = GameStart(self)
         self.missiles = []
-        self.numMissiles = number_of_missiles
+        self.numMissiles = int(number_of_missiles)
         self.deltatime = 0
         self.fps = 0
         self.level = 1
@@ -73,8 +73,8 @@ print("You are the director of a top secret base. Unfortunately, your power gene
 number_of_missiles = input("Choose a number of missiles(1=super easy, 2 = easy, 3=normal, 4=hard, 5 = super hard):")
 print("\n\n-------- Instructions: --------\nTry to survive as long as you can. The sky is divided into eight sectors, each sector has a shield. Use your shields to block incoming missiles(don't let them get to the radar!). (In keyboard mode, keys 1-8 operate the shields for the eight sectors.) You can turn your radar on (SPACE in keyboard mode) to scan different sectors of the sky for missiles - but only have your radar and shields on when neccessary, because they use lots of energy. (in keybaord mode, use LEFT and RIGHT arrows to rotate radar.)  The camera views at the bottom will show you if a missile gets past your shields. If a missile does get past your shields, don't worry, you have one chance to destroy it with an anti-missile. To use an antimissile, FIRST TURN YOUR RADAR OFF, press the antimissile button (E in keybaord mode). Then, press the button again when the aiming box and circle get to the right box, then the right height, then keep pressing the button until the missile is within the orange circle... Then wait 3 seconds and the antimissile will fire(antimissiles do use a small amount of energy). To cancel an antimissile, turn the radar back on.\n\nYour remaining energy is in the top right corner. The top left corner shows the progress of the engineers fixing the power generator. The bottom right corner shows the number of remaining antimissiles. \n\nTHERE WILL ALWAYS be {0} ACTIVE MISSILES IN THE SKY. Keep this in mind as it will help you preserve your power.\n\n".format(number_of_missiles))
 
-waitforstart = raw_input("Press enter TWICE to start.")
-startconfirm = raw_input("Press enter again to confirm start...")
+waitforstart = input("Press enter TWICE to start.")
+startconfirm = input("Press enter again to confirm start...")
 print("Starting game")
 game = Game()
 
